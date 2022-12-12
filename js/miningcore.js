@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
 // Current running domain (or ip address) url will be read from the browser url bar.
-// You can check the result in you browser development view -> F12 -> Console 
+// You can check the result in you browser development view -> F12 -> Console
 // -->> !! no need to change anything below here !! <<--
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ if (API.substring(API.length-1) != "/")
 {
 	API = API + "/";
 	console.log('Corrected API, does not end with / -> New API : ', API);
-} 
+}
 var stratumAddress = window.location.hostname;           				// Stratum address is:  domain.com
 
 
@@ -67,19 +67,19 @@ if(is_IE) {
 // Load INDEX Page content
 function loadIndex() {
   $("div[class^='page-").hide();
-  
+
   $(".page").hide();
   //$(".page-header").show();
   $(".page-wrapper").show();
   $(".page-footer").show();
-  
+
   var hashList = window.location.hash.split(/[#/?=]/);
   //var fullHash = document.URL.substr(document.URL.indexOf('#')+1);   //IE
   // example: #vtc/dashboard?address=VttsC2.....LXk9NJU
   currentPool    = hashList[1];
   currentPage    = hashList[2];
   currentAddress = hashList[3];
-  
+
   if (currentPool && !currentPage)
   {
     currentPage ="stats"
@@ -100,10 +100,10 @@ function loadIndex() {
 	$(".page-index").show();
     $(".main-sidebar").hide();
   }
-  
+
   if (currentPool) {
 	$("li[class^='nav-']").removeClass("active");
-    
+
 	switch (currentPage) {
       case "stats":
 	    console.log('Loading stats page content');
@@ -160,15 +160,15 @@ function loadHomePage() {
     .done(function(data) {
       const poolCoinCardTemplate = $(".index-coin-card-template").html();
 	  //const poolCoinTableTemplate = "";  //$(".index-coin-table-template").html();
-	  
+
 	  var poolCoinTableTemplate = "";
-		
+
       $.each(data.pools, function(index, value) {
- 
+
         var coinLogo = "<img class='coinimg' src='img/coin/icon/" + value.coin.type.toLowerCase() + ".png' />";
 		var coinName = value.coin.name;
-		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;} 
-        		
+		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;}
+
 		poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
 		poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'<span>" + coinLogo + coinName + " (" + value.coin.type.toUpperCase() + ") </span></a></td>";
 		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
@@ -184,7 +184,7 @@ function loadHomePage() {
       //if (poolList.length > 0) {
        	$(".pool-coin-table").html(poolCoinTableTemplate);
       //}
-	  	  
+
 	  $(document).ready(function() {
         $('#pool-coins tr').click(function() {
           var href = $(this).find("a").attr("href");
@@ -193,11 +193,11 @@ function loadHomePage() {
           }
         });
       });
-	  
+
     })
     .fail(function() {
       var poolCoinTableTemplate = "";
-	  
+
 	  poolCoinTableTemplate += "<tr><td colspan='8'> ";
 	  poolCoinTableTemplate += "<div class='alert alert-warning'>"
 		poolCoinTableTemplate += "	<h4><i class='fas fa-exclamation-triangle'></i> Warning!</h4>";
@@ -206,9 +206,9 @@ function loadHomePage() {
 		poolCoinTableTemplate += "	<p>Please try again later.</p>";
 	  poolCoinTableTemplate += "</div>"
 	  poolCoinTableTemplate += "</td></tr>";
-	  
+
 	  $(".pool-coin-table").html(poolCoinTableTemplate);
-	  
+
     });
 }
 
@@ -389,12 +389,12 @@ function loadConnectPage() {
       var connectPoolConfig = "";
       $.each(data.pools, function(index, value) {
         if (currentPool === value.id) {
-			
+
 			defaultPort = Object.keys(value.ports)[0];
         	coinName = value.coin.name;
 			coinType = value.coin.type.toLowerCase();
 			algorithm = value.coin.algorithm;
-			
+
 			// Connect Pool config table
 			connectPoolConfig += "<tr><td>Crypto Coin name</td><td>" + coinName + " (" + value.coin.type + ") </td></tr>";
 			//connectPoolConfig += "<tr><td>Coin Family line </td><td>" + value.coin.family + "</td></tr>";
@@ -407,7 +407,12 @@ function loadConnectPage() {
 			}
 			connectPoolConfig += "<tr><td>Pool Fee</td><td>" + value.poolFeePercent + "%</td></tr>";
 			$.each(value.ports, function(port, options) {
-				connectPoolConfig += "<tr><td>stratum+tcp://" + coinType + "." + stratumAddress + ":" + port + "</td><td>";
+				if (options.tls === true) {
+					connectPoolConfig += "<tr><td>stratum+ssl://";
+				} else {
+					connectPoolConfig += "<tr><td>stratum+tcp://";
+				}
+				connectPoolConfig += stratumAddress + ":" + port + "</td><td>";
 				if (typeof options.varDiff !== "undefined" && options.varDiff != null) {
 					connectPoolConfig += "Difficulty Variable / " + options.varDiff.minDiff + " &harr; ";
 					if (typeof options.varDiff.maxDiff === "undefined" || options.varDiff.maxDiff == null) {
@@ -420,14 +425,14 @@ function loadConnectPage() {
 				}
 				connectPoolConfig += "</td></tr>";
 			});
- 
+
         }
       });
       connectPoolConfig += "</tbody>";
       $("#connectPoolConfig").html(connectPoolConfig);
-	  
-	  
-	  // Connect Miner config 
+
+
+	  // Connect Miner config
 	  $("#miner-config").html("");
       $("#miner-config").load("poolconfig/" + coinType + ".html",
         function( response, status, xhr ) {
@@ -439,7 +444,7 @@ function loadConnectPage() {
 				.replace(/{{ stratumAddress }}/g, coinType + "." + stratumAddress + ":" + defaultPort)
 				.replace(/{{ coinName }}/g, coinName)
 				.replace(/{{ aglorithm }}/g, algorithm);
-				$(this).html(config);  
+				$(this).html(config);
 			  }
 			);
 		  } else {
@@ -545,7 +550,7 @@ function doesFileExist(urlToFile) {
     var xhr = new XMLHttpRequest();
     xhr.open('HEAD', urlToFile, false);
     xhr.send();
-     
+
     if (xhr.status == "404") {
         return false;
     } else {
@@ -560,16 +565,16 @@ function loadStatsData() {
     .done(function(data) {
       $.each(data.pools, function(index, value) {
         if (currentPool === value.id) {
-			
+
 		  $("#blockchainHeight").text(value.networkStats.blockHeight);
 		  $("#connectedPeers").text(value.networkStats.connectedPeers);
 		  $("#minimumPayment").text(value.paymentProcessing.minimumPayment + " " + value.coin.type);
 		  $("#payoutScheme").text(value.paymentProcessing.payoutScheme);
 		  $("#poolFeePercent").text(value.poolFeePercent + " %");
-		  
+
           $("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 5, "H/s"));
 		  $("#poolMiners").text(value.poolStats.connectedMiners + " Miner(s)");
-          
+
           $("#networkHashRate").text(_formatter(value.networkStats.networkHashrate, 5, "H/s"));
           $("#networkDifficulty").text(_formatter(value.networkStats.networkDifficulty, 5, ""));
         }
@@ -594,13 +599,13 @@ function loadStatsChart() {
   return $.ajax(API + "pools/" + currentPool + "/performance")
     .done(function(data) {
       labels = [];
-	  
+
 	  poolHashRate = [];
       networkHashRate = [];
       networkDifficulty = [];
       connectedMiners = [];
       connectedWorkers = [];
-      
+
       $.each(data.stats, function(index, value) {
         if (labels.length === 0 || (labels.length + 1) % 4 === 1) {
           var createDate = convertLocalDateToUTCDate(new Date(value.created),false);
@@ -614,12 +619,12 @@ function loadStatsChart() {
         connectedMiners.push(value.connectedMiners);
         connectedWorkers.push(value.connectedWorkers);
       });
-	  
+
       var dataPoolHash          = {labels: labels,series: [poolHashRate]};
       var dataNetworkHash       = {labels: labels,series: [networkHashRate]};
       var dataNetworkDifficulty = {labels: labels,series: [networkDifficulty]};
       var dataMiners            = {labels: labels,series: [connectedMiners,connectedWorkers]};
-	  
+
 	  var options = {
 		height: "200px",
         showArea: false,
@@ -639,7 +644,7 @@ function loadStatsChart() {
           divisor: 2
         })
       };
-	  
+
       var responsiveOptions = [
         [
           "screen and (max-width: 320px)",
@@ -656,7 +661,7 @@ function loadStatsChart() {
       Chartist.Line("#chartStatsHashRatePool",dataPoolHash,options,responsiveOptions);
       Chartist.Line("#chartStatsDiff", dataNetworkDifficulty, options, responsiveOptions);
       Chartist.Line("#chartStatsMiners", dataMiners, options, responsiveOptions);
- 
+
     })
     .fail(function() {
       $.notify(
@@ -751,7 +756,7 @@ function loadDashboardChart(walletAddress) {
 
 		labels = [];
         minerHashRate = [];
-		
+
         $.each(data, function(index, value) {
           if (labels.length === 0 || (labels.length + 1) % 4 === 1) {
             var createDate = convertLocalDateToUTCDate(
@@ -831,15 +836,15 @@ function loadNavigation() {
 			coinName = value.coin.name;
 			if (typeof coinName === "undefined" || coinName === null) {
 				coinName = value.coin.type;
-			} 
+			}
 		}
       });
       poolList += "</ul>";
-	  
+
       if (poolList.length > 0) {
         $(".coin-list-header").html(poolList);
       }
-	  
+
 	  var sidebarList = "";
 	  const sidebarTemplate = $(".sidebar-template").html();
       sidebarList += sidebarTemplate
@@ -847,12 +852,12 @@ function loadNavigation() {
 		.replace(/{{ coinLogo }}/g, coinLogo)
 		.replace(/{{ coinName }}/g, coinName)
       $(".sidebar-wrapper").html(sidebarList);
-  
+
       $("a.link").each(function() {
 	    if (localStorage[currentPool + "-walletAddress"] && this.href.indexOf("/dashboard") > 0)
 	    {
 		  this.href = "#" + currentPool + "/dashboard?address=" + localStorage[currentPool + "-walletAddress"];
-	    } 
+	    }
       });
 
     })
@@ -868,4 +873,3 @@ function loadNavigation() {
       );
     });
 }
-
