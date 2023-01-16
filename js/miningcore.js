@@ -571,6 +571,7 @@ function loadStatsData() {
 		  $("#minimumPayment").text(value.paymentProcessing.minimumPayment + " " + value.coin.type);
 		  $("#payoutScheme").text(value.paymentProcessing.payoutScheme);
 		  $("#poolFeePercent").text(value.poolFeePercent + " %");
+		  $("#poolEffort").text(Math.round(value.poolEffort * 100)  + " %");
 
           $("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 5, "H/s"));
 		  $("#poolMiners").text(value.poolStats.connectedMiners + " Miner(s)");
