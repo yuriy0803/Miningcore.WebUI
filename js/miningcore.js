@@ -530,6 +530,26 @@ function convertUTCDateToLocalDate(date) {
     return newDate;
 }
 
+// String Convert -> Seconds
+function readableSeconds(t) {
+	var seconds = Math.floor(t % 3600 % 60);
+	var minutes = Math.floor(t % 3600 / 60);
+	var hours = Math.floor(t % 86400 / 3600);
+	var days = Math.floor(t % 604800 / 86400);	
+	var weeks = Math.floor(t % 2629799.8272 / 604800);
+	var months = Math.floor(t % 31557597.9264 / 2629799.8272);
+	var years = Math.floor(t / 31557597.9264);
+
+	var sYears = years > 0 ? years + ((years== 1) ? "y" : "y") : "";
+	var sMonths = months > 0 ? ((years > 0) ? " " : "") + months + ((months== 1) ? "mo" : "mo") : "";
+	var sWeeks = weeks > 0 ? ((years > 0 || months > 0) ? " " : "") + weeks + ((weeks== 1) ? "w" : "w") : "";
+	var sDays = days > 0 ? ((years > 0 || months > 0 || weeks > 0) ? " " : "") + days + ((days== 1) ? "d" : "d") : "";
+	var sHours = hours > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0) ? " " : "") + hours + (hours== 1 ? "h" : "h") : "";
+	var sMinutes = minutes > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0 || hours > 0) ? " " : "") + minutes + (minutes == 1 ? "m" : "m") : "";
+	var sSeconds = seconds > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0 || hours > 0 || minutes > 0) ? " " : "") + seconds + (seconds == 1 ? "s" : "s") : ((years < 1 && months < 1 && weeks < 1 && days < 1 && hours < 1 && minutes < 1 ) ? " Few milliseconds" : "");
+	if (seconds > 0) return sYears + sMonths + sWeeks + sDays + sHours + sMinutes + sSeconds;
+	else return "&#8734;";
+}
 
 // Scroll to top off page
 function scrollPageTop() {
@@ -555,39 +575,138 @@ function doesFileExist(urlToFile) {
 
 
 // STATS page data
-function loadStatsData() {
-  return $.ajax(API + "pools")
-    .done(function(data) {
-      $.each(data.pools, function(index, value) {
-        if (currentPool === value.id) {
-			
-		  $("#blockchainHeight").text(value.networkStats.blockHeight);
-		  $("#connectedPeers").text(value.networkStats.connectedPeers);
-		  $("#minimumPayment").text(value.paymentProcessing.minimumPayment + " " + value.coin.type);
-		  $("#payoutScheme").text(value.paymentProcessing.payoutScheme);
-		  $("#poolFeePercent").text(value.poolFeePercent + " %");
-		  
-          $("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 5, "H/s"));
-		  $("#poolMiners").text(value.poolStats.connectedMiners + " Miner(s)");
-          
-          $("#networkHashRate").text(_formatter(value.networkStats.networkHashrate, 5, "H/s"));
-          $("#networkDifficulty").text(_formatter(value.networkStats.networkDifficulty, 5, ""));
-        }
-      });
-    })
-    .fail(function() {
-      $.notify(
-        {
-          message: "Error: No response from API.<br>(loadStatsData)"
-        },
-        {
-          type: "danger",
-          timer: 3000
-        }
-      );
-    });
-}
+async function loadStatsData() 
+{
+	console.log('Loading stats data...');
+	try 
+	{
+		const data = await $.ajax(API + "pools");
+		const value = data.pools.find(pool => currentPool === pool.id);
+		if (!value) 
+		{
+			throw new Error("Pool not found");
+		}
 
+		var getcoin_price = 0;
+		
+		var totalBlocks = value.totalBlocks;
+		var poolEffort = value.poolEffort * 100;
+		$("#blockchainHeight").text(value.networkStats.blockHeight.toLocaleString());
+		$("#poolBlocks").text(totalBlocks.toLocaleString());
+		$("#connectedPeers").text(value.networkStats.connectedPeers);
+		$("#minimumPayment").html(`${value.paymentProcessing.minimumPayment.toLocaleString()} ${value.coin.symbol}<br>(${value.paymentProcessing.payoutScheme})`);
+		$("#totalPaid").html(value.totalPaid.toLocaleString() + " " +  value.coin.symbol );
+		$("#poolFeePercent").text(`${value.poolFeePercent} %`);
+		$("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 2, "H/s"));
+		$("#poolMiners").text(`${value.poolStats.connectedMiners} Miner(s)`);
+		$("#networkHashRate").text(_formatter(value.networkStats.networkHashrate, 2, "H/s"));
+		$("#networkDifficulty").text(_formatter(value.networkStats.networkDifficulty, 5, ""));
+		const blocksResponse = await $.ajax(API + "pools/" + currentPool + "/blocks?page=0&pageSize="+totalBlocks);
+		let pendingCount = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "pending") 
+			{
+				pendingCount++;
+			}
+		}
+		let confirmedCount = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "confirmed") 
+			{
+				confirmedCount++;
+			}
+		}
+		//console.log("Total Pending Blocks:", pendingCount);
+
+		let reward = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "confirmed") 
+			{
+				reward = currentBlock.reward;
+				break;
+			}
+		}
+		
+		$("#poolEffort").html(poolEffort.toFixed(2) +" %");
+
+		var networkHashRate = value.networkStats.networkHashrate;
+		var poolHashRate = value.poolStats.poolHashrate;
+		if (confirmedCount > 0) //blocksResponse.length
+		{
+			var ancientBlock = blocksResponse[blocksResponse.length - 1];
+			var recentBlock = blocksResponse[0];
+			var MostRecentBlockTime = recentBlock.created;
+			var MostRecentBlockHeight = recentBlock.blockHeight;
+			var MostAncientBlockTime = ancientBlock.created;
+			var MostAncientBlockHeight = ancientBlock.blockHeight;
+			var MostRecentBlockTimeInSeconds = new Date(MostRecentBlockTime).getTime() / 1000;
+			var MostAncientBlockTimeInSeconds = new Date(MostAncientBlockTime).getTime() / 1000;
+			var blockTime = (MostRecentBlockTimeInSeconds - MostAncientBlockTimeInSeconds) / (MostRecentBlockHeight - MostAncientBlockHeight);
+			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
+		} 
+		else 
+		{
+			var blockTime = value.blockRefreshInterval;
+			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
+		}
+		$("#text_TTFBlocks").html(readableSeconds(ttf_blocks));
+		$("#text_BlockReward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
+		$("#text_BlocksPending").text(pendingCount.toLocaleString());
+		$("#poolBlocks").text(confirmedCount.toLocaleString());
+		$("#blockreward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
+		
+		if(value.coin.symbol == "LOG")
+		{
+			var coinname = value.coin.name.toLowerCase();
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=" + coinname + "&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse[coinname]['usd'];
+		}
+		else if(value.coin.symbol == "VRSC")
+		{
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=verus-coin&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse['verus-coin']['usd'];
+		}
+		else if(value.coin.symbol == "MBC" || value.coin.symbol == "GEC" || value.coin.symbol == "ETX" || value.coin.symbol == "ISO")
+		{
+			const bitxonexResponse = await $.ajax("https://www.bitxonex.com/api/v2/trade/public/markets/" + value.coin.symbol.toLowerCase() + "usdt/tickers");
+			var getcoin_price = bitxonexResponse.ticker.last;
+		}
+		else if(value.coin.symbol == "REDE")
+		{
+			const XeggexResponse = await $.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/REDEV2%2FUSDT");
+			var getcoin_price = XeggexResponse.lastPrice;
+		}
+		else
+		{
+			$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
+			{
+				var	getcoin_price = data['lastPrice'];
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			}).fail(function() 
+			{
+				var	getcoin_price = 0;
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			});
+		} 
+		$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+		$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+		console.log(value.coin.symbol,'price: ',getcoin_price);
+		
+//		loadWorkerTTFBlocks();
+	} 
+	catch (error) 
+	{
+		console.error(error);
+	}
+}
 
 // STATS page charts
 function loadStatsChart() {
