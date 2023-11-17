@@ -164,22 +164,47 @@ function loadHomePage() {
 	  var poolCoinTableTemplate = "";
 		
       $.each(data.pools, function(index, value) {
- 
+
         var coinLogo = "<img class='coinimg' src='img/coin/icon/" + value.coin.type.toLowerCase() + ".png' />";
 		var coinName = value.coin.name;
-		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;} 
-        		
+		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;}
+
+		var pool_mined = true;
+		var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
+		var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
+		if(value.hasOwnProperty('networkStats'))
+		{
+			pool_networkstat_hash = _formatter(value.networkStats.networkHashrate, 3, "H/s");
+			pool_networkstat_diff = _formatter(value.networkStats.networkDifficulty, (value.networkStats.networkDifficulty < 0.001) ? 6 : 3, "");
+			pool_mined = false;
+		}
+		
+		var pool_stat_miner = "&nbsp;processing...&nbsp;";
+		var pool_stat_hash = "&nbsp;processing...&nbsp;";
+		if(value.hasOwnProperty('networkStats'))
+		{
+			pool_stat_miner = value.poolStats.connectedMiners;
+			pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
+			pool_mined = false;
+		}
+
+		var pool_connected = "Loading...";
+		if(!pool_mined)
+		{
+			pool_connected = "Go Mine" + coinLogo + coinName;
+		}
 		poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
 		poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'<span>" + coinLogo + coinName + " (" + value.coin.type.toUpperCase() + ") </span></a></td>";
 		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
-		poolCoinTableTemplate += "<td class='miners'>" + value.poolStats.connectedMiners + "</td>";
-		poolCoinTableTemplate += "<td class='pool-hash'>" + _formatter(value.poolStats.poolHashrate, 5, "H/s") + "</td>";
+		poolCoinTableTemplate += "<td class='miners'>" + pool_stat_miner + "</td>";
+		poolCoinTableTemplate += "<td class='pool-hash'>" + pool_stat_hash + "</td>";
 		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " %</td>";
-		poolCoinTableTemplate += "<td class='net-hash'>" + _formatter(value.networkStats.networkHashrate, 5, "H/s") + "</td>";
-		poolCoinTableTemplate += "<td class='net-diff'>" + _formatter(value.networkStats.networkDifficulty, 5, "") + "</td>";
-		poolCoinTableTemplate += "<td class='card-btn col-hide'>Go Mine " + coinLogo + coinName + "</td>";
+		poolCoinTableTemplate += "<td class='net-hash'>" + pool_networkstat_hash + "</td>";
+		poolCoinTableTemplate += "<td class='net-diff'>" + pool_networkstat_diff + "</td>";
+		poolCoinTableTemplate += "<td class='card-btn col-hide'>" + pool_connected + "</td>";
 		poolCoinTableTemplate += "</tr>";
       });
+
 
       //if (poolList.length > 0) {
        	$(".pool-coin-table").html(poolCoinTableTemplate);
