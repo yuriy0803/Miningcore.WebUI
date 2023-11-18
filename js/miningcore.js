@@ -463,7 +463,7 @@ function loadConnectPage() {
                 .html()
 				.replace(/{{ stratumAddress }}/g, coinType + "." + stratumAddress + ":" + defaultPort)
 				.replace(/{{ coinName }}/g, coinName)
-				.replace(/{{ aglorithm }}/g, algorithm);
+				.replace(/{{ algorithm }}/g, algorithm);
 				$(this).html(config);  
 			  }
 			);
@@ -472,7 +472,7 @@ function loadConnectPage() {
             .html()
             .replace(/{{ stratumAddress }}/g, coinType + "." + stratumAddress + ":" + defaultPort)
 			.replace(/{{ coinName }}/g, coinName)
-			.replace(/{{ aglorithm }}/g, algorithm);
+			.replace(/{{ algorithm }}/g, algorithm);
             $(this).html(config);
 		  }
         }
