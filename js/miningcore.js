@@ -645,7 +645,6 @@ async function loadStatsData()
 				confirmedCount++;
 			}
 		}
-		//console.log("Total Pending Blocks:", pendingCount);
 
 		let reward = 0;
 		for (let i = 0; i < blocksResponse.length; i++) 
@@ -662,7 +661,7 @@ async function loadStatsData()
 
 		var networkHashRate = value.networkStats.networkHashrate;
 		var poolHashRate = value.poolStats.poolHashrate;
-		if (confirmedCount > 0) //blocksResponse.length
+		if (confirmedCount > 0) 
 		{
 			var ancientBlock = blocksResponse[blocksResponse.length - 1];
 			var recentBlock = blocksResponse[0];
@@ -681,51 +680,26 @@ async function loadStatsData()
 			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
 		}
 		$("#text_TTFBlocks").html(readableSeconds(ttf_blocks));
-		$("#text_BlockReward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
+		$("#text_BlockReward").text(reward.toLocaleString() + " " + value.coin.symbol );
 		$("#text_BlocksPending").text(pendingCount.toLocaleString());
 		$("#poolBlocks").text(confirmedCount.toLocaleString());
-		$("#blockreward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
 		
-		if(value.coin.symbol == "LOG")
+		$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
 		{
-			var coinname = value.coin.name.toLowerCase();
-			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=" + coinname + "&vs_currencies=usd");
-			var getcoin_price = CoingeckoResponse[coinname]['usd'];
-		}
-		else if(value.coin.symbol == "VRSC")
+			var	getcoin_price = data['lastPrice'];
+			$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+			$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+		}).fail(function() 
 		{
-			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=verus-coin&vs_currencies=usd");
-			var getcoin_price = CoingeckoResponse['verus-coin']['usd'];
-		}
-		else if(value.coin.symbol == "MBC" || value.coin.symbol == "GEC" || value.coin.symbol == "ETX" || value.coin.symbol == "ISO")
-		{
-			const bitxonexResponse = await $.ajax("https://www.bitxonex.com/api/v2/trade/public/markets/" + value.coin.symbol.toLowerCase() + "usdt/tickers");
-			var getcoin_price = bitxonexResponse.ticker.last;
-		}
-		else if(value.coin.symbol == "REDE")
-		{
-			const XeggexResponse = await $.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/REDEV2%2FUSDT");
-			var getcoin_price = XeggexResponse.lastPrice;
-		}
-		else
-		{
-			$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
-			{
-				var	getcoin_price = data['lastPrice'];
-				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
-				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-			}).fail(function() 
-			{
-				var	getcoin_price = 0;
-				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
-				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-			});
-		} 
+			var	getcoin_price = 0;
+			$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+			$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+		});
+
 		$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
 		$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-		console.log(value.coin.symbol,'price: ',getcoin_price);
+//		console.log(value.coin.symbol,'price: ',getcoin_price);
 		
-//		loadWorkerTTFBlocks();
 	} 
 	catch (error) 
 	{
