@@ -172,10 +172,12 @@ function loadHomePage() {
 		var pool_mined = true;
 		var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
 		var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
+		var pool_networkstat_blockheight = "&nbsp;processing...&nbsp;";
 		if(value.hasOwnProperty('networkStats'))
 		{
 			pool_networkstat_hash = _formatter(value.networkStats.networkHashrate, 3, "H/s");
 			pool_networkstat_diff = _formatter(value.networkStats.networkDifficulty, (value.networkStats.networkDifficulty < 0.001) ? 6 : 3, "");
+			pool_networkstat_blockheight = Intl.NumberFormat().format(value.networkStats.blockHeight);
 			pool_mined = false;
 		}
 		
@@ -188,20 +190,25 @@ function loadHomePage() {
 			pool_mined = false;
 		}
 
-		var pool_connected = "Loading...";
 		if(!pool_mined)
 		{
-			pool_connected = "Go Mine" + coinLogo + coinName;
+			poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
+			poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'><span>" + coinLogo + coinName + "</span></a></td>";
 		}
-		poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
-		poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'<span>" + coinLogo + coinName + " (" + value.coin.type.toUpperCase() + ") </span></a></td>";
+		else
+		{
+			poolCoinTableTemplate += "<tr class='coin-table-row'>";
+			poolCoinTableTemplate += "<td class='coin'><span>" + coinLogo + coinName + "</span></td>";
+		}
+		poolCoinTableTemplate += "<td class='symbol'>" + value.coin.type.toUpperCase() + "</td>";
 		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
+		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " %</td>";
+		poolCoinTableTemplate += "<td class='minimum-payment'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
 		poolCoinTableTemplate += "<td class='miners'>" + pool_stat_miner + "</td>";
 		poolCoinTableTemplate += "<td class='pool-hash'>" + pool_stat_hash + "</td>";
-		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " %</td>";
 		poolCoinTableTemplate += "<td class='net-hash'>" + pool_networkstat_hash + "</td>";
 		poolCoinTableTemplate += "<td class='net-diff'>" + pool_networkstat_diff + "</td>";
-		poolCoinTableTemplate += "<td class='card-btn col-hide'>" + pool_connected + "</td>";
+		poolCoinTableTemplate += "<td class='blockheight'>" + pool_networkstat_blockheight + "</td>";
 		poolCoinTableTemplate += "</tr>";
       });
 
@@ -645,6 +652,7 @@ async function loadStatsData()
 				confirmedCount++;
 			}
 		}
+		//console.log("Total Pending Blocks:", pendingCount);
 
 		let reward = 0;
 		for (let i = 0; i < blocksResponse.length; i++) 
@@ -661,7 +669,7 @@ async function loadStatsData()
 
 		var networkHashRate = value.networkStats.networkHashrate;
 		var poolHashRate = value.poolStats.poolHashrate;
-		if (confirmedCount > 0) 
+		if (confirmedCount > 0) //blocksResponse.length
 		{
 			var ancientBlock = blocksResponse[blocksResponse.length - 1];
 			var recentBlock = blocksResponse[0];
@@ -680,26 +688,51 @@ async function loadStatsData()
 			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
 		}
 		$("#text_TTFBlocks").html(readableSeconds(ttf_blocks));
-		$("#text_BlockReward").text(reward.toLocaleString() + " " + value.coin.symbol );
+		$("#text_BlockReward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
 		$("#text_BlocksPending").text(pendingCount.toLocaleString());
 		$("#poolBlocks").text(confirmedCount.toLocaleString());
+		$("#blockreward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
 		
-		$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
+		if(value.coin.symbol == "LOG")
 		{
-			var	getcoin_price = data['lastPrice'];
-			$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
-			$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-		}).fail(function() 
+			var coinname = value.coin.name.toLowerCase();
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=" + coinname + "&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse[coinname]['usd'];
+		}
+		else if(value.coin.symbol == "VRSC")
 		{
-			var	getcoin_price = 0;
-			$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
-			$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-		});
-
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=verus-coin&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse['verus-coin']['usd'];
+		}
+		else if(value.coin.symbol == "MBC" || value.coin.symbol == "GEC" || value.coin.symbol == "ETX" || value.coin.symbol == "ISO")
+		{
+			const bitxonexResponse = await $.ajax("https://www.bitxonex.com/api/v2/trade/public/markets/" + value.coin.symbol.toLowerCase() + "usdt/tickers");
+			var getcoin_price = bitxonexResponse.ticker.last;
+		}
+		else if(value.coin.symbol == "REDE")
+		{
+			const XeggexResponse = await $.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/REDEV2%2FUSDT");
+			var getcoin_price = XeggexResponse.lastPrice;
+		}
+		else
+		{
+			$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
+			{
+				var	getcoin_price = data['lastPrice'];
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			}).fail(function() 
+			{
+				var	getcoin_price = 0;
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			});
+		} 
 		$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
 		$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
-//		console.log(value.coin.symbol,'price: ',getcoin_price);
+		console.log(value.coin.symbol,'price: ',getcoin_price);
 		
+//		loadWorkerTTFBlocks();
 	} 
 	catch (error) 
 	{
