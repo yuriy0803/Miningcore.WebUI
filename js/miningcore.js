@@ -190,6 +190,8 @@ function loadHomePage() {
 			pool_mined = false;
 		}
 
+		var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
+
 		if(!pool_mined)
 		{
 			poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
@@ -201,14 +203,14 @@ function loadHomePage() {
 			poolCoinTableTemplate += "<td class='coin'><span>" + coinLogo + coinName + "</span></td>";
 		}
 		poolCoinTableTemplate += "<td class='symbol'>" + value.coin.type.toUpperCase() + "</td>";
-		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
-		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " % <br/>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</td>";
-		poolCoinTableTemplate += "<td class='minimum-payment'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
-		poolCoinTableTemplate += "<td class='miners'>" + pool_stat_miner + "</td>";
-		poolCoinTableTemplate += "<td class='pool-hash'>" + pool_stat_hash + "</td>";
-		poolCoinTableTemplate += "<td class='net-hash'>" + pool_networkstat_hash + "</td>";
-		poolCoinTableTemplate += "<td class='net-diff'>" + pool_networkstat_diff + "</td>";
-		poolCoinTableTemplate += "<td class='blockheight'>" + pool_networkstat_blockheight + "</td>";
+		poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
+		poolCoinTableTemplate += "<td class='fee' style='text-align: center;><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
+		poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center;'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
+		poolCoinTableTemplate += "<td class='miners' style='text-align: center;'>" + pool_stat_miner + "</td>";
+		poolCoinTableTemplate += "<td class='pool-hash' style='text-align: center;'>" + pool_stat_hash + "</td>";
+		poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
+		poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
+		poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
 		poolCoinTableTemplate += "</tr>";
       });
 
