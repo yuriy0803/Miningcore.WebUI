@@ -202,7 +202,7 @@ function loadHomePage() {
 		}
 		poolCoinTableTemplate += "<td class='symbol'>" + value.coin.type.toUpperCase() + "</td>";
 		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
-		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " %</td>";
+		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " % <br/>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</td>";
 		poolCoinTableTemplate += "<td class='minimum-payment'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
 		poolCoinTableTemplate += "<td class='miners'>" + pool_stat_miner + "</td>";
 		poolCoinTableTemplate += "<td class='pool-hash'>" + pool_stat_hash + "</td>";
