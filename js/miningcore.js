@@ -190,6 +190,8 @@ function loadHomePage() {
 			pool_mined = false;
 		}
 
+		var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
+		var styledTimeAgo = renderTimeAgoBox(LastPoolBlockTime);
 		var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
 
 		if(!pool_mined)
@@ -211,6 +213,7 @@ function loadHomePage() {
 		poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
 		poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
 		poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
+		poolCoinTableTemplate += "<td class='timeAgo text-center'><a href='#" + value.id + "/blocks' style='text-decoration: none;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + styledTimeAgo + "</span></a></td>";
 		poolCoinTableTemplate += "</tr>";
       });
 
@@ -562,6 +565,54 @@ function convertUTCDateToLocalDate(date) {
     var hours = date.getUTCHours();
     newDate.setHours(hours - localOffset);
     return newDate;
+}
+
+// Function to calculate the time difference between now and a given date
+function renderTimeAgoBox(date) {
+    var textColor = 'white';
+    var borderRadius = '.25em';
+    var bgColor = '';
+    function getTimeAgoAdmin(date) {
+        if (!date || isNaN(date.getTime())) {
+            return "NEVER";
+        }
+        var now = new Date();
+        var diff = now.getTime() - date.getTime();
+        var seconds = Math.floor(diff / 1000);
+        if (seconds < 60) {
+            return "NOW";
+        }
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        var days = Math.floor(hours / 24);
+        var months = Math.floor(days / 30);
+        if (months >= 1) {
+            return months + " month" + (months > 1 ? "s" : "");
+        } else if (days >= 2) {
+            return days + " day" + (days > 1 ? "s" : "");
+        } else if (hours >= 48) {
+            return "2 days";
+        } else if (hours >= 2) {
+            return hours + " hours";
+        } else if (minutes >= 2) {
+            return minutes + " min" + (minutes > 1 ? "s" : "");
+        } else {
+            return "NOW";
+        }
+    }
+    var timeAgo = getTimeAgoAdmin(date);
+    if (timeAgo === "NEVER" || timeAgo === "NOW") {
+        bgColor = (timeAgo === "NEVER") ? '#666666' : '#00c000';
+    } else if (timeAgo.includes("month")) {
+        bgColor = '#d1941f'; // Orange for months
+    } else if (timeAgo.includes("day")) {
+        bgColor = '#c0c000'; // Yellow for days
+    } else if (timeAgo.includes("hour")) {
+        bgColor = '#008000'; // Dark green for hours
+    } else if (timeAgo.includes("min")) {
+        bgColor = '#00c000'; // Bright green for minutes
+    }
+    return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 65px; padding: 2px; font-size: 65%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
 }
 
 // String Convert -> Seconds
