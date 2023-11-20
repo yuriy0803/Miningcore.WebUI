@@ -183,10 +183,13 @@ function loadHomePage() {
 		
 		var pool_stat_miner = "&nbsp;processing...&nbsp;";
 		var pool_stat_hash = "&nbsp;processing...&nbsp;";
+		var pool_netWorkShare = "<div class='progress-bar progress-bar-striped progress-bar-animated bg-warning wp-100'>&nbsp;processing...&nbsp;</div>";
+		var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
 		if(value.hasOwnProperty('networkStats'))
 		{
 			pool_stat_miner = value.poolStats.connectedMiners;
 			pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
+			pool_netWorkShare = "<div class='progress'><div class='progress-bar progress-bar-orange' role='progressbar' style='width: ' + netWorkShare + '%; background-color: orange; aria-valuenow=' + netWorkShare + ' aria-valuemin='0' aria-valuemax='100'>" + netWorkShare + "%</div></div>";
 			pool_mined = false;
 		}
 
@@ -210,6 +213,7 @@ function loadHomePage() {
 		poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center;'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
 		poolCoinTableTemplate += "<td class='miners' style='text-align: center;'>" + pool_stat_miner + "</td>";
 		poolCoinTableTemplate += "<td class='pool-hash' style='text-align: center;'>" + pool_stat_hash + "</td>";
+		poolCoinTableTemplate += "<td class='net-share' style='text-align: center;'>" + pool_netWorkShare + "</td>";
 		poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
 		poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
 		poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
@@ -612,7 +616,7 @@ function renderTimeAgoBox(date) {
     } else if (timeAgo.includes("min")) {
         bgColor = '#00c000'; // Bright green for minutes
     }
-    return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 65px; padding: 2px; font-size: 65%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
+    return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 100%; padding: 2px; font-size: 75%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
 }
 
 // String Convert -> Seconds
