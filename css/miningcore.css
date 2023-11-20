@@ -1010,11 +1010,12 @@ div.card-chart {
 	#pool-coins td:nth-of-type(5):before { content: "Minimum Payment"; }
 	#pool-coins td:nth-of-type(6):before { content: "Miners"; }
 	#pool-coins td:nth-of-type(7):before { content: "Pool Hashrate"; }
-	#pool-coins td:nth-of-type(8):before { content: "Network Hashrate"; }
-	#pool-coins td:nth-of-type(9):before { content: "Network Difficulty"; }
-	#pool-coins td:nth-of-type(10):before { content: "BlockHeight"; }
-	#pool-coins td:nth-of-type(11):before { content: "Last Found"; }
-	#pool-coins td:nth-of-type(12):before { content: ""; }
+	#pool-coins td:nth-of-type(8):before { content: "Network Dominance"; }
+	#pool-coins td:nth-of-type(9):before { content: "Network Hashrate"; }
+	#pool-coins td:nth-of-type(10):before { content: "Network Difficulty"; }
+	#pool-coins td:nth-of-type(11):before { content: "BlockHeight"; }
+	#pool-coins td:nth-of-type(12):before { content: "Last Found"; }
+	#pool-coins td:nth-of-type(13):before { content: ""; }
  
 	.sidebar-open .main-sidebar {
 		-webkit-transform:translate(0, 0);
