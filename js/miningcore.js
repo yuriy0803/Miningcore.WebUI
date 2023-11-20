@@ -154,105 +154,82 @@ function loadIndex() {
 
 
 // Load HOME page content
-function loadHomePage() {
-  console.log('Loading home page content');
-  return $.ajax(API + "pools")
-    .done(function(data) {
-      const poolCoinCardTemplate = $(".index-coin-card-template").html();
-	  //const poolCoinTableTemplate = "";  //$(".index-coin-table-template").html();
-	  
-	  var poolCoinTableTemplate = "";
-		
-      $.each(data.pools, function(index, value) {
-
-        var coinLogo = "<img class='coinimg' src='img/coin/icon/" + value.coin.type.toLowerCase() + ".png' />";
-		var coinName = value.coin.name;
-		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;}
-
-		var pool_mined = true;
-		var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
-		var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
-		var pool_networkstat_blockheight = "&nbsp;processing...&nbsp;";
-		if(value.hasOwnProperty('networkStats'))
+function loadHomePage(){
+	console.log('Loading Mining Pool Stats Page...');
+	$.ajax(API + "pools")
+	.done(async function (data) {
+		data.pools.sort((a, b) => 
 		{
-			pool_networkstat_hash = _formatter(value.networkStats.networkHashrate, 3, "H/s");
-			pool_networkstat_diff = _formatter(value.networkStats.networkDifficulty, (value.networkStats.networkDifficulty < 0.001) ? 6 : 3, "");
-			pool_networkstat_blockheight = Intl.NumberFormat().format(value.networkStats.blockHeight);
-			pool_mined = false;
-		}
-		
-		var pool_stat_miner = "&nbsp;processing...&nbsp;";
-		var pool_stat_hash = "&nbsp;processing...&nbsp;";
-		var pool_netWorkShare = "&nbsp;processing...&nbsp;";
-		var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
-		if(value.hasOwnProperty('networkStats'))
+			return b.poolStats.poolHashrate / b.networkStats.networkHashrate - a.poolStats.poolHashrate / a.networkStats.networkHashrate;
+		});
+		var poolCoinTableTemplate = "";
+		for (let index = 0; index < data.pools.length; index++) 
 		{
-			pool_stat_miner = value.poolStats.connectedMiners;
-			pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
-			pool_netWorkShare = "<div class='progress'><div class='progress-bar progress-bar-orange' role='progressbar' style='width: ' + netWorkShare + '%; background-color: orange; aria-valuenow=' + netWorkShare + ' aria-valuemin='0' aria-valuemax='100'>" + netWorkShare + "%</div></div>";
-			pool_mined = false;
+			const value = data.pools[index];
+			var coinLogo = "<img class='coinimg' src='../../img/coin/icon/" + value.coin.type.toLowerCase() + ".png' style='height: 25px; width: 25px;' />";
+			var coinName = value.coin.name || value.coin.type;
+			var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
+			var styledTimeAgo = renderTimeAgoBox(LastPoolBlockTime);
+			var coin_symbol = value.coin.symbol;
+			var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
+			var coinNameWithTag = (value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? coinName + ' [SOLO]' : coinName;
+			var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
+			var pool_mined = true;
+			var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
+			var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
+			var pool_networkstat_blockheight = "&nbsp;processing...&nbsp;";
+			var pool_stat_miner = "&nbsp;processing...&nbsp;";
+			var pool_stat_hash = "&nbsp;processing...&nbsp;";
+			var pool_netWorkShare = "&nbsp;processing...&nbsp;";
+			if(value.hasOwnProperty('networkStats'))
+			{
+				pool_networkstat_hash = _formatter(value.networkStats.networkHashrate, 3, "H/s");
+				pool_networkstat_diff = _formatter(value.networkStats.networkDifficulty, 6, "");
+				pool_networkstat_blockheight = Intl.NumberFormat().format(value.networkStats.blockHeight);
+				pool_stat_miner = value.poolStats.connectedMiners;
+				pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
+				pool_netWorkShare = "<div class='progress'><div class='progress-bar' role='progressbar' style='width: ' + netWorkShare + '%; aria-valuenow=' + netWorkShare + ' aria-valuemin='0' aria-valuemax='100'>" + netWorkShare + "%</div></div>";
+				pool_mined = false;
+			}
+			if(!pool_mined)
+			{
+				poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
+			}
+			else
+			{
+				poolCoinTableTemplate += "<tr class='coin-table-row'>";
+			}
+			poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "' style='text-decoration: none; color: #000000; font-weight: normal;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + coinLogo + coinNameWithTag + "</span></a></td>";
+			poolCoinTableTemplate += "<td class='symbol'>" + coin_symbol + "</td>";
+			poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
+			poolCoinTableTemplate += "<td class='fee' style='text-align: center;'><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
+			poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center; '>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
+			poolCoinTableTemplate += "<td class='miners' style='text-align: center;'>" + pool_stat_miner + "</td>";
+			poolCoinTableTemplate += "<td class='pool-hash' style='text-align: center;'>" + pool_stat_hash + "</td>";
+			poolCoinTableTemplate += "<td class='net-share' style='text-align: center;'>" + pool_netWorkShare + "</td>";
+			poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
+			poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
+			poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
+			poolCoinTableTemplate += "<td class='timeAgo text-center'><a href='#" + value.id + "/blocks' style='text-decoration: none;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + styledTimeAgo + "</span></a></td>";
+			poolCoinTableTemplate += "</tr>";
 		}
+		$(".pool-coin-table").html(poolCoinTableTemplate);
+	})
+	.fail(function ()
+	{
+		var poolCoinTableTemplate = "";
+		poolCoinTableTemplate += "<tr><td colspan='8'>";
+		poolCoinTableTemplate += "<div class='alert alert-warning text-center'>"
+		poolCoinTableTemplate += "<h4><i class='fas fa-exclamation-triangle'></i> Warning!</h4>";
+		poolCoinTableTemplate += "<hr>";
+		poolCoinTableTemplate += "<p>The pool is currently down for maintenance.</p>";
+		poolCoinTableTemplate += "<p>Please try again later.</p>";
+		poolCoinTableTemplate += "</div>"
+		poolCoinTableTemplate += "</td></tr>";
 
-		var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
-		var styledTimeAgo = renderTimeAgoBox(LastPoolBlockTime);
-		var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
-
-		if(!pool_mined)
-		{
-			poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
-			poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'><span>" + coinLogo + coinName + "</span></a></td>";
-		}
-		else
-		{
-			poolCoinTableTemplate += "<tr class='coin-table-row'>";
-			poolCoinTableTemplate += "<td class='coin'><span>" + coinLogo + coinName + "</span></td>";
-		}
-		poolCoinTableTemplate += "<td class='symbol'>" + value.coin.type.toUpperCase() + "</td>";
-		poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
-		poolCoinTableTemplate += "<td class='fee' style='text-align: center;><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
-		poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center;'>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
-		poolCoinTableTemplate += "<td class='miners' style='text-align: center;'>" + pool_stat_miner + "</td>";
-		poolCoinTableTemplate += "<td class='pool-hash' style='text-align: center;'>" + pool_stat_hash + "</td>";
-		poolCoinTableTemplate += "<td class='net-share' style='text-align: center;'>" + pool_netWorkShare + "</td>";
-		poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
-		poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
-		poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
-		poolCoinTableTemplate += "<td class='timeAgo text-center'><a href='#" + value.id + "/blocks' style='text-decoration: none;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + styledTimeAgo + "</span></a></td>";
-		poolCoinTableTemplate += "</tr>";
-      });
-
-
-      //if (poolList.length > 0) {
-       	$(".pool-coin-table").html(poolCoinTableTemplate);
-      //}
-	  	  
-	  $(document).ready(function() {
-        $('#pool-coins tr').click(function() {
-          var href = $(this).find("a").attr("href");
-          if(href) {
-            window.location = href;
-          }
-        });
-      });
-	  
-    })
-    .fail(function() {
-      var poolCoinTableTemplate = "";
-	  
-	  poolCoinTableTemplate += "<tr><td colspan='8'> ";
-	  poolCoinTableTemplate += "<div class='alert alert-warning'>"
-		poolCoinTableTemplate += "	<h4><i class='fas fa-exclamation-triangle'></i> Warning!</h4>";
-		poolCoinTableTemplate += "	<hr>";
-		poolCoinTableTemplate += "	<p>The pool is currently down for maintenance.</p>";
-		poolCoinTableTemplate += "	<p>Please try again later.</p>";
-	  poolCoinTableTemplate += "</div>"
-	  poolCoinTableTemplate += "</td></tr>";
-	  
-	  $(".pool-coin-table").html(poolCoinTableTemplate);
-	  
-    });
+		$(".pool-coin-table").html(poolCoinTableTemplate);
+	});
 }
-
 
 // Load STATS page content
 function loadStatsPage() {
