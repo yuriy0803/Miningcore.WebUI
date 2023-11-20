@@ -194,12 +194,13 @@ function loadHomePage(){
 			if(!pool_mined)
 			{
 				poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
+				poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "' style='text-decoration: none; color: #000000; font-weight: normal;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + coinLogo + coinNameWithTag + "</span></a></td>";
 			}
 			else
 			{
 				poolCoinTableTemplate += "<tr class='coin-table-row'>";
+				poolCoinTableTemplate += "<td class='coin'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + coinLogo + coinNameWithTag + "</span></td>";
 			}
-			poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "' style='text-decoration: none; color: #000000; font-weight: normal;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + coinLogo + coinNameWithTag + "</span></a></td>";
 			poolCoinTableTemplate += "<td class='symbol'>" + coin_symbol + "</td>";
 			poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
 			poolCoinTableTemplate += "<td class='fee' style='text-align: center;'><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
