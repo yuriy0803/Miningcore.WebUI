@@ -199,8 +199,8 @@ function loadHomePage(){
 			{
 				poolCoinTableTemplate += "<tr class='coin-table-row'>";
 			}
-			poolCoinTableTemplate += "<td class='coin'>" + coinLogo + coinNameWithTag + "</td>";
-			poolCoinTableTemplate += "<td class='symbol'>" + coin_symbol + "</td>";
+			poolCoinTableTemplate += "<td class='coin' style='text-align: center;'><a href='#" + value.id + "' style='text-decoration: none;'>" + coinLogo + coinNameWithTag + "</a></td>";
+			poolCoinTableTemplate += "<td class='symbol' style='text-align: center;'>" + coin_symbol + "</td>";
 			poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
 			poolCoinTableTemplate += "<td class='fee' style='text-align: center;'><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
 			poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center; '>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
@@ -210,7 +210,7 @@ function loadHomePage(){
 			poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
 			poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
 			poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
-			poolCoinTableTemplate += "<td class='timeAgo text-center'><a href='#" + value.id + "/blocks' style='text-decoration: none;'><span onmouseover='this.style.fontWeight=\"bold\"' onmouseout='this.style.fontWeight=\"normal\"'>" + styledTimeAgo + "</span></a></td>";
+			poolCoinTableTemplate += "<td class='timeAgo' style='text-align: center;'>" + styledTimeAgo + "</td>";
 			poolCoinTableTemplate += "</tr>";
 		}
 		$(".pool-coin-table").html(poolCoinTableTemplate);
