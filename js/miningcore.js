@@ -191,12 +191,13 @@ function loadHomePage(){
 			if(!pool_mined)
 			{
 				poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
+				poolCoinTableTemplate += "<td class='coin' style='text-align: center;'><a href='#" + value.id + "' style='text-decoration: none;'>" + coinLogo + coinNameWithTag + "</a></td>";
 			}
 			else
 			{
 				poolCoinTableTemplate += "<tr class='coin-table-row'>";
+				poolCoinTableTemplate += "<td class='coin' style='text-align: center;'>" + coinLogo + coinNameWithTag + "</td>";
 			}
-			poolCoinTableTemplate += "<td class='coin' style='text-align: center;'><a href='#" + value.id + "' style='text-decoration: none;'>" + coinLogo + coinNameWithTag + "</a></td>";
 			poolCoinTableTemplate += "<td class='symbol' style='text-align: center;'>" + coin_symbol + "</td>";
 			poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
 			poolCoinTableTemplate += "<td class='fee' style='text-align: center;'><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
