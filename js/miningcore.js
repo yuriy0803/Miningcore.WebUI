@@ -157,15 +157,11 @@ function loadIndex() {
 function loadHomePage(){
 	console.log('Loading Mining Pool Stats Page...');
 	$.ajax(API + "pools")
-	.done(async function (data) {
-		data.pools.sort((a, b) => 
-		{
-			return b.poolStats.poolHashrate / b.networkStats.networkHashrate - a.poolStats.poolHashrate / a.networkStats.networkHashrate;
-		});
+	.done(function (data) {
+		const poolCoinCardTemplate = $(".index-coin-card-template").html();
 		var poolCoinTableTemplate = "";
-		for (let index = 0; index < data.pools.length; index++) 
+		$.each(data.pools, function(index, value)
 		{
-			const value = data.pools[index];
 			var coinLogo = "<img class='coinimg' src='../../img/coin/icon/" + value.coin.type.toLowerCase() + ".png' style='height: 25px; width: 25px;' />";
 			var coinName = value.coin.name || value.coin.type;
 			var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
@@ -212,7 +208,7 @@ function loadHomePage(){
 			poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
 			poolCoinTableTemplate += "<td class='timeAgo' style='text-align: center;'>" + styledTimeAgo + "</td>";
 			poolCoinTableTemplate += "</tr>";
-		}
+		});
 		$(".pool-coin-table").html(poolCoinTableTemplate);
 
 		$(document).ready(function() 
