@@ -163,7 +163,8 @@ function loadHomePage(){
 		$.each(data.pools, function(index, value)
 		{
 			var coinLogo = "<img class='coinimg' src='../../img/coin/icon/" + value.coin.type.toLowerCase() + ".png' style='height: 25px; width: 25px;' />";
-			var coinName = value.coin.name || value.coin.type;
+			var coinName = (value.coin.canonicalName) ? value.coin.canonicalName : value.coin.name;
+			if (typeof coinName === "undefined" || coinName === null) coinName = value.coin.type;
 			var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
 			var styledTimeAgo = renderTimeAgoBox(LastPoolBlockTime);
 			var coin_symbol = value.coin.symbol;
