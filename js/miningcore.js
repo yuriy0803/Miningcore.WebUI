@@ -169,7 +169,6 @@ function loadHomePage(){
 			var coin_symbol = value.coin.symbol;
 			var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
 			var coinNameWithTag = (value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? coinName + ' [SOLO]' : coinName;
-			var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
 			var pool_mined = true;
 			var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
 			var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
@@ -184,6 +183,7 @@ function loadHomePage(){
 				pool_networkstat_blockheight = Intl.NumberFormat().format(value.networkStats.blockHeight);
 				pool_stat_miner = value.poolStats.connectedMiners;
 				pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
+				var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
 				pool_netWorkShare = '<div class="progress"><div class="progress-bar progress-bar-orange progress-bar-striped" role="progressbar" style="width: ' + netWorkShare + '%;" aria-valuenow="' + netWorkShare + '" aria-valuemin="0" aria-valuemax="100">' + netWorkShare + '%</div></div>';
 				pool_mined = false;
 			}
