@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
 // Current running domain (or ip address) url will be read from the browser url bar.
-// You can check the result in you browser development view -> F12 -> Console
+// You can check the result in you browser development view -> F12 -> Console 
 // -->> !! no need to change anything below here !! <<--
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ if (API.substring(API.length-1) != "/")
 {
 	API = API + "/";
 	console.log('Corrected API, does not end with / -> New API : ', API);
-}
+} 
 var stratumAddress = window.location.hostname;           				// Stratum address is:  domain.com
 
 
@@ -67,19 +67,19 @@ if(is_IE) {
 // Load INDEX Page content
 function loadIndex() {
   $("div[class^='page-").hide();
-
+  
   $(".page").hide();
   //$(".page-header").show();
   $(".page-wrapper").show();
   $(".page-footer").show();
-
+  
   var hashList = window.location.hash.split(/[#/?=]/);
   //var fullHash = document.URL.substr(document.URL.indexOf('#')+1);   //IE
   // example: #vtc/dashboard?address=VttsC2.....LXk9NJU
   currentPool    = hashList[1];
   currentPage    = hashList[2];
   currentAddress = hashList[3];
-
+  
   if (currentPool && !currentPage)
   {
     currentPage ="stats"
@@ -100,10 +100,10 @@ function loadIndex() {
 	$(".page-index").show();
     $(".main-sidebar").hide();
   }
-
+  
   if (currentPool) {
 	$("li[class^='nav-']").removeClass("active");
-
+    
 	switch (currentPage) {
       case "stats":
 	    console.log('Loading stats page content');
@@ -154,64 +154,92 @@ function loadIndex() {
 
 
 // Load HOME page content
-function loadHomePage() {
-  console.log('Loading home page content');
-  return $.ajax(API + "pools")
-    .done(function(data) {
-      const poolCoinCardTemplate = $(".index-coin-card-template").html();
-	  //const poolCoinTableTemplate = "";  //$(".index-coin-table-template").html();
+function loadHomePage(){
+	console.log('Loading Mining Pool Stats Page...');
+	$.ajax(API + "pools")
+	.done(function (data) {
+		const poolCoinCardTemplate = $(".index-coin-card-template").html();
+		var poolCoinTableTemplate = "";
+		$.each(data.pools, function(index, value)
+		{
+			var coinLogo = "<img class='coinimg' src='../../img/coin/icon/" + value.coin.type.toLowerCase() + ".png' style='height: 25px; width: 25px;' />";
+			var coinName = (value.coin.canonicalName) ? value.coin.canonicalName : value.coin.name;
+			if (typeof coinName === "undefined" || coinName === null) coinName = value.coin.type;
+			var LastPoolBlockTime = new Date(value.lastPoolBlockTime);
+			var styledTimeAgo = renderTimeAgoBox(LastPoolBlockTime);
+			var coin_symbol = value.coin.symbol;
+			var payoutSchemeColor = (value.paymentProcessing.payoutScheme.toUpperCase() === 'PPLNS') ? '#39f' : ((value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? '#ff1666' : 'black');
+			var coinNameWithTag = (value.paymentProcessing.payoutScheme.toUpperCase() === 'SOLO') ? coinName + ' [SOLO]' : coinName;
+			var pool_mined = true;
+			var pool_networkstat_hash = "&nbsp;processing...&nbsp;";
+			var pool_networkstat_diff = "&nbsp;processing...&nbsp;";
+			var pool_networkstat_blockheight = "&nbsp;processing...&nbsp;";
+			var pool_stat_miner = "&nbsp;processing...&nbsp;";
+			var pool_stat_hash = "&nbsp;processing...&nbsp;";
+			var pool_netWorkShare = "&nbsp;processing...&nbsp;";
+			if(value.hasOwnProperty('networkStats'))
+			{
+				pool_networkstat_hash = _formatter(value.networkStats.networkHashrate, 3, "H/s");
+				pool_networkstat_diff = _formatter(value.networkStats.networkDifficulty, 6, "");
+				pool_networkstat_blockheight = Intl.NumberFormat().format(value.networkStats.blockHeight);
+				pool_stat_miner = value.poolStats.connectedMiners;
+				pool_stat_hash = _formatter(value.poolStats.poolHashrate, 3, "H/s");
+				var netWorkShare = (value.poolStats.poolHashrate / value.networkStats.networkHashrate * 100).toFixed(2);
+				pool_netWorkShare = '<div class="progress"><div class="progress-bar progress-bar-orange progress-bar-striped" role="progressbar" style="width: ' + netWorkShare + '%;" aria-valuenow="' + netWorkShare + '" aria-valuemin="0" aria-valuemax="100">' + netWorkShare + '%</div></div>';
+				pool_mined = false;
+			}
+			if(!pool_mined)
+			{
+				poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
+				poolCoinTableTemplate += "<td class='coin' style='text-align: center;'><a href='#" + value.id + "' style='text-decoration: none;'>" + coinLogo + coinNameWithTag + "</a></td>";
+			}
+			else
+			{
+				poolCoinTableTemplate += "<tr class='coin-table-row'>";
+				poolCoinTableTemplate += "<td class='coin' style='text-align: center;'>" + coinLogo + coinNameWithTag + "</td>";
+			}
+			poolCoinTableTemplate += "<td class='symbol' style='text-align: center;'>" + coin_symbol + "</td>";
+			poolCoinTableTemplate += "<td class='algo' style='text-align: center;'>" + value.coin.algorithm + "</td>";
+			poolCoinTableTemplate += "<td class='fee' style='text-align: center;'><span style='color: black;'>" + value.poolFeePercent + " % </span><br/><span style='color: " + payoutSchemeColor + ";'>" + value.paymentProcessing.payoutScheme.toUpperCase() + "</span></td>";
+			poolCoinTableTemplate += "<td class='minimum-payment' style='text-align: center; '>" + value.paymentProcessing.minimumPayment.toLocaleString() + "</td>";
+			poolCoinTableTemplate += "<td class='miners' style='text-align: center;'>" + pool_stat_miner + "</td>";
+			poolCoinTableTemplate += "<td class='pool-hash' style='text-align: center;'>" + pool_stat_hash + "</td>";
+			poolCoinTableTemplate += "<td class='net-share' style='text-align: center;'>" + pool_netWorkShare + "</td>";
+			poolCoinTableTemplate += "<td class='net-hash' style='text-align: center;'>" + pool_networkstat_hash + "</td>";
+			poolCoinTableTemplate += "<td class='net-diff' style='text-align: center;'>" + pool_networkstat_diff + "</td>";
+			poolCoinTableTemplate += "<td class='blockheight' style='text-align: center;'>" + pool_networkstat_blockheight + "</td>";
+			poolCoinTableTemplate += "<td class='timeAgo' style='text-align: center;'>" + styledTimeAgo + "</td>";
+			poolCoinTableTemplate += "</tr>";
+		});
+		$(".pool-coin-table").html(poolCoinTableTemplate);
 
-	  var poolCoinTableTemplate = "";
+		$(document).ready(function() 
+		{
+			$('#pool-coins tr').click(function() 
+			{
+				var href = $(this).find("a").attr("href");
+				if(href) 
+				{
+					window.location = href;
+				}
+			});
+		});
+	})
+	.fail(function ()
+	{
+		var poolCoinTableTemplate = "";
+		poolCoinTableTemplate += "<tr><td colspan='8'>";
+		poolCoinTableTemplate += "<div class='alert alert-warning text-center'>"
+		poolCoinTableTemplate += "<h4><i class='fas fa-exclamation-triangle'></i> Warning!</h4>";
+		poolCoinTableTemplate += "<hr>";
+		poolCoinTableTemplate += "<p>The pool is currently down for maintenance.</p>";
+		poolCoinTableTemplate += "<p>Please try again later.</p>";
+		poolCoinTableTemplate += "</div>"
+		poolCoinTableTemplate += "</td></tr>";
 
-      $.each(data.pools, function(index, value) {
-
-        var coinLogo = "<img class='coinimg' src='img/coin/icon/" + value.coin.type.toLowerCase() + ".png' />";
-		var coinName = value.coin.name;
-		if (typeof coinName === "undefined" || coinName === null) {coinName = value.coin.type;}
-
-		poolCoinTableTemplate += "<tr class='coin-table-row' href='#" + value.id + "'>";
-		poolCoinTableTemplate += "<td class='coin'><a href='#" + value.id + "'<span>" + coinLogo + coinName + " (" + value.coin.type.toUpperCase() + ") </span></a></td>";
-		poolCoinTableTemplate += "<td class='algo'>" + value.coin.algorithm + "</td>";
-		poolCoinTableTemplate += "<td class='miners'>" + value.poolStats.connectedMiners + "</td>";
-		poolCoinTableTemplate += "<td class='pool-hash'>" + _formatter(value.poolStats.poolHashrate, 5, "H/s") + "</td>";
-		poolCoinTableTemplate += "<td class='fee'>" + value.poolFeePercent + " %</td>";
-		poolCoinTableTemplate += "<td class='net-hash'>" + _formatter(value.networkStats.networkHashrate, 5, "H/s") + "</td>";
-		poolCoinTableTemplate += "<td class='net-diff'>" + _formatter(value.networkStats.networkDifficulty, 5, "") + "</td>";
-		poolCoinTableTemplate += "<td class='card-btn col-hide'>Go Mine " + coinLogo + coinName + "</td>";
-		poolCoinTableTemplate += "</tr>";
-      });
-
-      //if (poolList.length > 0) {
-       	$(".pool-coin-table").html(poolCoinTableTemplate);
-      //}
-
-	  $(document).ready(function() {
-        $('#pool-coins tr').click(function() {
-          var href = $(this).find("a").attr("href");
-          if(href) {
-            window.location = href;
-          }
-        });
-      });
-
-    })
-    .fail(function() {
-      var poolCoinTableTemplate = "";
-
-	  poolCoinTableTemplate += "<tr><td colspan='8'> ";
-	  poolCoinTableTemplate += "<div class='alert alert-warning'>"
-		poolCoinTableTemplate += "	<h4><i class='fas fa-exclamation-triangle'></i> Warning!</h4>";
-		poolCoinTableTemplate += "	<hr>";
-		poolCoinTableTemplate += "	<p>The pool is currently down for maintenance.</p>";
-		poolCoinTableTemplate += "	<p>Please try again later.</p>";
-	  poolCoinTableTemplate += "</div>"
-	  poolCoinTableTemplate += "</td></tr>";
-
-	  $(".pool-coin-table").html(poolCoinTableTemplate);
-
-    });
+		$(".pool-coin-table").html(poolCoinTableTemplate);
+	});
 }
-
 
 // Load STATS page content
 function loadStatsPage() {
@@ -303,7 +331,7 @@ function loadBlocksPage() {
       var blockList = "";
       if (data.length > 0) {
         $.each(data, function(index, value) {
-		  var createDate = convertLocalDateToUTCDate(new Date(value.created),false);
+		  var createDate = convertUTCDateToLocalDate(new Date(value.created),false);
           var effort = Math.round(value.effort * 100);
           var effortClass = "";
           if (effort < 30) {
@@ -356,7 +384,7 @@ function loadPaymentsPage() {
       var paymentList = "";
       if (data.length > 0) {
         $.each(data, function(index, value) {
-          var createDate = convertLocalDateToUTCDate(new Date(value.created),false);
+          var createDate = convertUTCDateToLocalDate(new Date(value.created),false);
           paymentList += '<tr>';
           paymentList +=   "<td>" + createDate + "</td>";
           paymentList +=   '<td><a href="' + value.addressInfoLink + '" target="_blank">' + value.address.substring(0, 12) + ' &hellip; ' + value.address.substring(value.address.length - 12) + '</td>';
@@ -389,12 +417,12 @@ function loadConnectPage() {
       var connectPoolConfig = "";
       $.each(data.pools, function(index, value) {
         if (currentPool === value.id) {
-
+			
 			defaultPort = Object.keys(value.ports)[0];
         	coinName = value.coin.name;
 			coinType = value.coin.type.toLowerCase();
 			algorithm = value.coin.algorithm;
-
+			
 			// Connect Pool config table
 			connectPoolConfig += "<tr><td>Crypto Coin name</td><td>" + coinName + " (" + value.coin.type + ") </td></tr>";
 			//connectPoolConfig += "<tr><td>Coin Family line </td><td>" + value.coin.family + "</td></tr>";
@@ -407,12 +435,7 @@ function loadConnectPage() {
 			}
 			connectPoolConfig += "<tr><td>Pool Fee</td><td>" + value.poolFeePercent + "%</td></tr>";
 			$.each(value.ports, function(port, options) {
-				if (options.tls === true) {
-					connectPoolConfig += "<tr><td>stratum+ssl://";
-				} else {
-					connectPoolConfig += "<tr><td>stratum+tcp://";
-				}
-				connectPoolConfig += stratumAddress + ":" + port + "</td><td>";
+				connectPoolConfig += "<tr><td>stratum+tcp://" + coinType + "." + stratumAddress + ":" + port + "</td><td>";
 				if (typeof options.varDiff !== "undefined" && options.varDiff != null) {
 					connectPoolConfig += "Difficulty Variable / " + options.varDiff.minDiff + " &harr; ";
 					if (typeof options.varDiff.maxDiff === "undefined" || options.varDiff.maxDiff == null) {
@@ -425,14 +448,14 @@ function loadConnectPage() {
 				}
 				connectPoolConfig += "</td></tr>";
 			});
-
+ 
         }
       });
       connectPoolConfig += "</tbody>";
       $("#connectPoolConfig").html(connectPoolConfig);
-
-
-	  // Connect Miner config
+	  
+	  
+	  // Connect Miner config 
 	  $("#miner-config").html("");
       $("#miner-config").load("poolconfig/" + coinType + ".html",
         function( response, status, xhr ) {
@@ -443,8 +466,8 @@ function loadConnectPage() {
                 .html()
 				.replace(/{{ stratumAddress }}/g, coinType + "." + stratumAddress + ":" + defaultPort)
 				.replace(/{{ coinName }}/g, coinName)
-				.replace(/{{ aglorithm }}/g, algorithm);
-				$(this).html(config);
+				.replace(/{{ algorithm }}/g, algorithm);
+				$(this).html(config);  
 			  }
 			);
 		  } else {
@@ -452,7 +475,7 @@ function loadConnectPage() {
             .html()
             .replace(/{{ stratumAddress }}/g, coinType + "." + stratumAddress + ":" + defaultPort)
 			.replace(/{{ coinName }}/g, coinName)
-			.replace(/{{ aglorithm }}/g, algorithm);
+			.replace(/{{ algorithm }}/g, algorithm);
             $(this).html(config);
 		  }
         }
@@ -535,6 +558,74 @@ function convertUTCDateToLocalDate(date) {
     return newDate;
 }
 
+// Function to calculate the time difference between now and a given date
+function renderTimeAgoBox(date) {
+    var textColor = 'white';
+    var borderRadius = '.25em';
+    var bgColor = '';
+    function getTimeAgoAdmin(date) {
+        if (!date || isNaN(date.getTime())) {
+            return "NEVER";
+        }
+        var now = new Date();
+        var diff = now.getTime() - date.getTime();
+        var seconds = Math.floor(diff / 1000);
+        if (seconds < 60) {
+            return "NOW";
+        }
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        var days = Math.floor(hours / 24);
+        var months = Math.floor(days / 30);
+        if (months >= 1) {
+            return months + " month" + (months > 1 ? "s" : "");
+        } else if (days >= 2) {
+            return days + " day" + (days > 1 ? "s" : "");
+        } else if (hours >= 48) {
+            return "2 days";
+        } else if (hours >= 2) {
+            return hours + " hours";
+        } else if (minutes >= 2) {
+            return minutes + " min" + (minutes > 1 ? "s" : "");
+        } else {
+            return "NOW";
+        }
+    }
+    var timeAgo = getTimeAgoAdmin(date);
+    if (timeAgo === "NEVER" || timeAgo === "NOW") {
+        bgColor = (timeAgo === "NEVER") ? '#666666' : '#00c000';
+    } else if (timeAgo.includes("month")) {
+        bgColor = '#d1941f'; // Orange for months
+    } else if (timeAgo.includes("day")) {
+        bgColor = '#c0c000'; // Yellow for days
+    } else if (timeAgo.includes("hour")) {
+        bgColor = '#008000'; // Dark green for hours
+    } else if (timeAgo.includes("min")) {
+        bgColor = '#00c000'; // Bright green for minutes
+    }
+    return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 100%; padding: 2px; font-size: 75%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
+}
+
+// String Convert -> Seconds
+function readableSeconds(t) {
+	var seconds = Math.floor(t % 3600 % 60);
+	var minutes = Math.floor(t % 3600 / 60);
+	var hours = Math.floor(t % 86400 / 3600);
+	var days = Math.floor(t % 604800 / 86400);	
+	var weeks = Math.floor(t % 2629799.8272 / 604800);
+	var months = Math.floor(t % 31557597.9264 / 2629799.8272);
+	var years = Math.floor(t / 31557597.9264);
+
+	var sYears = years > 0 ? years + ((years== 1) ? "y" : "y") : "";
+	var sMonths = months > 0 ? ((years > 0) ? " " : "") + months + ((months== 1) ? "mo" : "mo") : "";
+	var sWeeks = weeks > 0 ? ((years > 0 || months > 0) ? " " : "") + weeks + ((weeks== 1) ? "w" : "w") : "";
+	var sDays = days > 0 ? ((years > 0 || months > 0 || weeks > 0) ? " " : "") + days + ((days== 1) ? "d" : "d") : "";
+	var sHours = hours > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0) ? " " : "") + hours + (hours== 1 ? "h" : "h") : "";
+	var sMinutes = minutes > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0 || hours > 0) ? " " : "") + minutes + (minutes == 1 ? "m" : "m") : "";
+	var sSeconds = seconds > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0 || hours > 0 || minutes > 0) ? " " : "") + seconds + (seconds == 1 ? "s" : "s") : ((years < 1 && months < 1 && weeks < 1 && days < 1 && hours < 1 && minutes < 1 ) ? " Few milliseconds" : "");
+	if (seconds > 0) return sYears + sMonths + sWeeks + sDays + sHours + sMinutes + sSeconds;
+	else return "&#8734;";
+}
 
 // Scroll to top off page
 function scrollPageTop() {
@@ -550,7 +641,7 @@ function doesFileExist(urlToFile) {
     var xhr = new XMLHttpRequest();
     xhr.open('HEAD', urlToFile, false);
     xhr.send();
-
+     
     if (xhr.status == "404") {
         return false;
     } else {
@@ -560,56 +651,154 @@ function doesFileExist(urlToFile) {
 
 
 // STATS page data
-function loadStatsData() {
-  return $.ajax(API + "pools")
-    .done(function(data) {
-      $.each(data.pools, function(index, value) {
-        if (currentPool === value.id) {
+async function loadStatsData() 
+{
+	console.log('Loading stats data...');
+	try 
+	{
+		const data = await $.ajax(API + "pools");
+		const value = data.pools.find(pool => currentPool === pool.id);
+		if (!value) 
+		{
+			throw new Error("Pool not found");
+		}
 
-		  $("#blockchainHeight").text(value.networkStats.blockHeight);
-		  $("#connectedPeers").text(value.networkStats.connectedPeers);
-		  $("#minimumPayment").text(value.paymentProcessing.minimumPayment + " " + value.coin.type);
-		  $("#payoutScheme").text(value.paymentProcessing.payoutScheme);
-		  $("#poolFeePercent").text(value.poolFeePercent + " %");
-		  $("#poolEffort").text(Math.round(value.poolEffort * 100)  + " %");
+		var getcoin_price = 0;
+		
+		var totalBlocks = value.totalBlocks;
+		var poolEffort = value.poolEffort * 100;
+		$("#blockchainHeight").text(value.networkStats.blockHeight.toLocaleString());
+		$("#poolBlocks").text(totalBlocks.toLocaleString());
+		$("#connectedPeers").text(value.networkStats.connectedPeers);
+		$("#minimumPayment").html(`${value.paymentProcessing.minimumPayment.toLocaleString()} ${value.coin.symbol}<br>(${value.paymentProcessing.payoutScheme})`);
+		$("#totalPaid").html(value.totalPaid.toLocaleString() + " " +  value.coin.symbol );
+		$("#poolFeePercent").text(`${value.poolFeePercent} %`);
+		$("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 2, "H/s"));
+		$("#poolMiners").text(`${value.poolStats.connectedMiners} Miner(s)`);
+		$("#networkHashRate").text(_formatter(value.networkStats.networkHashrate, 2, "H/s"));
+		$("#networkDifficulty").text(_formatter(value.networkStats.networkDifficulty, 5, ""));
+		const blocksResponse = await $.ajax(API + "pools/" + currentPool + "/blocks?page=0&pageSize="+totalBlocks);
+		let pendingCount = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "pending") 
+			{
+				pendingCount++;
+			}
+		}
+		let confirmedCount = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "confirmed") 
+			{
+				confirmedCount++;
+			}
+		}
+		//console.log("Total Pending Blocks:", pendingCount);
 
-          $("#poolHashRate").text(_formatter(value.poolStats.poolHashrate, 5, "H/s"));
-		  $("#poolMiners").text(value.poolStats.connectedMiners + " Miner(s)");
+		let reward = 0;
+		for (let i = 0; i < blocksResponse.length; i++) 
+		{
+			const currentBlock = blocksResponse[i];
+			if (currentBlock.status === "confirmed") 
+			{
+				reward = currentBlock.reward;
+				break;
+			}
+		}
+		
+		$("#poolEffort").html(poolEffort.toFixed(2) +" %");
 
-          $("#networkHashRate").text(_formatter(value.networkStats.networkHashrate, 5, "H/s"));
-          $("#networkDifficulty").text(_formatter(value.networkStats.networkDifficulty, 5, ""));
-        }
-      });
-    })
-    .fail(function() {
-      $.notify(
-        {
-          message: "Error: No response from API.<br>(loadStatsData)"
-        },
-        {
-          type: "danger",
-          timer: 3000
-        }
-      );
-    });
+		var networkHashRate = value.networkStats.networkHashrate;
+		var poolHashRate = value.poolStats.poolHashrate;
+		if (confirmedCount > 0) //blocksResponse.length
+		{
+			var ancientBlock = blocksResponse[blocksResponse.length - 1];
+			var recentBlock = blocksResponse[0];
+			var MostRecentBlockTime = recentBlock.created;
+			var MostRecentBlockHeight = recentBlock.blockHeight;
+			var MostAncientBlockTime = ancientBlock.created;
+			var MostAncientBlockHeight = ancientBlock.blockHeight;
+			var MostRecentBlockTimeInSeconds = new Date(MostRecentBlockTime).getTime() / 1000;
+			var MostAncientBlockTimeInSeconds = new Date(MostAncientBlockTime).getTime() / 1000;
+			var blockTime = (MostRecentBlockTimeInSeconds - MostAncientBlockTimeInSeconds) / (MostRecentBlockHeight - MostAncientBlockHeight);
+			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
+		} 
+		else 
+		{
+			var blockTime = value.blockRefreshInterval;
+			var ttf_blocks = (networkHashRate / poolHashRate) * blockTime;
+		}
+		$("#text_TTFBlocks").html(readableSeconds(ttf_blocks));
+		$("#text_BlockReward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
+		$("#text_BlocksPending").text(pendingCount.toLocaleString());
+		$("#poolBlocks").text(confirmedCount.toLocaleString());
+		$("#blockreward").text(reward.toLocaleString() + " (" + value.coin.symbol + ")");
+		
+		if(value.coin.symbol == "LOG")
+		{
+			var coinname = value.coin.name.toLowerCase();
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=" + coinname + "&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse[coinname]['usd'];
+		}
+		else if(value.coin.symbol == "VRSC")
+		{
+			const CoingeckoResponse = await $.ajax("https://api.coingecko.com/api/v3/simple/price?ids=verus-coin&vs_currencies=usd");
+			var getcoin_price = CoingeckoResponse['verus-coin']['usd'];
+		}
+		else if(value.coin.symbol == "MBC" || value.coin.symbol == "GEC" || value.coin.symbol == "ETX" || value.coin.symbol == "ISO")
+		{
+			const bitxonexResponse = await $.ajax("https://www.bitxonex.com/api/v2/trade/public/markets/" + value.coin.symbol.toLowerCase() + "usdt/tickers");
+			var getcoin_price = bitxonexResponse.ticker.last;
+		}
+		else if(value.coin.symbol == "REDE")
+		{
+			const XeggexResponse = await $.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/REDEV2%2FUSDT");
+			var getcoin_price = XeggexResponse.lastPrice;
+		}
+		else
+		{
+			$.ajax("https://api.xeggex.com/api/v2/market/getbysymbol/"+ value.coin.symbol +"%2FUSDT").done(function(data)
+			{
+				var	getcoin_price = data['lastPrice'];
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			}).fail(function() 
+			{
+				var	getcoin_price = 0;
+				$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+				$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+			});
+		} 
+		$("#text_Price").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 9, minimumFractionDigits: 0}).format(getcoin_price));
+		$("#text_BlockValue").html(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6, minimumFractionDigits: 0}).format(getcoin_price * reward));
+		console.log(value.coin.symbol,'price: ',getcoin_price);
+		
+//		loadWorkerTTFBlocks();
+	} 
+	catch (error) 
+	{
+		console.error(error);
+	}
 }
-
 
 // STATS page charts
 function loadStatsChart() {
   return $.ajax(API + "pools/" + currentPool + "/performance")
     .done(function(data) {
       labels = [];
-
+	  
 	  poolHashRate = [];
       networkHashRate = [];
       networkDifficulty = [];
       connectedMiners = [];
       connectedWorkers = [];
-
+      
       $.each(data.stats, function(index, value) {
         if (labels.length === 0 || (labels.length + 1) % 4 === 1) {
-          var createDate = convertLocalDateToUTCDate(new Date(value.created),false);
+          var createDate = convertUTCDateToLocalDate(new Date(value.created),false);
           labels.push(createDate.getHours() + ":00");
         } else {
           labels.push("");
@@ -620,12 +809,12 @@ function loadStatsChart() {
         connectedMiners.push(value.connectedMiners);
         connectedWorkers.push(value.connectedWorkers);
       });
-
+	  
       var dataPoolHash          = {labels: labels,series: [poolHashRate]};
       var dataNetworkHash       = {labels: labels,series: [networkHashRate]};
       var dataNetworkDifficulty = {labels: labels,series: [networkDifficulty]};
       var dataMiners            = {labels: labels,series: [connectedMiners,connectedWorkers]};
-
+	  
 	  var options = {
 		height: "200px",
         showArea: false,
@@ -645,7 +834,7 @@ function loadStatsChart() {
           divisor: 2
         })
       };
-
+	  
       var responsiveOptions = [
         [
           "screen and (max-width: 320px)",
@@ -662,7 +851,7 @@ function loadStatsChart() {
       Chartist.Line("#chartStatsHashRatePool",dataPoolHash,options,responsiveOptions);
       Chartist.Line("#chartStatsDiff", dataNetworkDifficulty, options, responsiveOptions);
       Chartist.Line("#chartStatsMiners", dataMiners, options, responsiveOptions);
-
+ 
     })
     .fail(function() {
       $.notify(
@@ -757,10 +946,10 @@ function loadDashboardChart(walletAddress) {
 
 		labels = [];
         minerHashRate = [];
-
+		
         $.each(data, function(index, value) {
           if (labels.length === 0 || (labels.length + 1) % 4 === 1) {
-            var createDate = convertLocalDateToUTCDate(
+            var createDate = convertUTCDateToLocalDate(
               new Date(value.created),
               false
             );
@@ -837,15 +1026,15 @@ function loadNavigation() {
 			coinName = value.coin.name;
 			if (typeof coinName === "undefined" || coinName === null) {
 				coinName = value.coin.type;
-			}
+			} 
 		}
       });
       poolList += "</ul>";
-
+	  
       if (poolList.length > 0) {
         $(".coin-list-header").html(poolList);
       }
-
+	  
 	  var sidebarList = "";
 	  const sidebarTemplate = $(".sidebar-template").html();
       sidebarList += sidebarTemplate
@@ -853,12 +1042,12 @@ function loadNavigation() {
 		.replace(/{{ coinLogo }}/g, coinLogo)
 		.replace(/{{ coinName }}/g, coinName)
       $(".sidebar-wrapper").html(sidebarList);
-
+  
       $("a.link").each(function() {
 	    if (localStorage[currentPool + "-walletAddress"] && this.href.indexOf("/dashboard") > 0)
 	    {
 		  this.href = "#" + currentPool + "/dashboard?address=" + localStorage[currentPool + "-walletAddress"];
-	    }
+	    } 
       });
 
     })
@@ -874,3 +1063,4 @@ function loadNavigation() {
       );
     });
 }
+
