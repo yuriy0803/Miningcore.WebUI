@@ -323,58 +323,152 @@ function loadMinersPage() {
     });
 }
 
-
 // Load BLOCKS page content
-function loadBlocksPage() {
-  return $.ajax(API + "pools/" + currentPool + "/blocks?page=0&pageSize=100")
-    .done(function(data) {
-      var blockList = "";
-      if (data.length > 0) {
-        $.each(data, function(index, value) {
-		  var createDate = convertUTCDateToLocalDate(new Date(value.created),false);
-          var effort = Math.round(value.effort * 100);
-          var effortClass = "";
-          if (effort < 30) {
-            effortClass = "effort1";
-          } else if (effort < 80) {
-            effortClass = "effort2";
-          } else if (effort < 110) {
-            effortClass = "effort3";
-          } else {
-            effortClass = "effort4";
-          }
+function loadBlocksPage() 
+{
+	//console.log("loadBlocksPage");
+	return $.ajax(API + "pools/" + currentPool + "/blocks?page=0&pageSize=100")
+    .done(function (data) {
+		var blockList = "";
+		var newBlockList = "";
+		var newBlockCount = 0;
+		var pendingBlockList = "";
+		var pendingBlockCount = 0;
+		var confirmedBlockCount = 0;
+		// Reset minerBlocks before populating again
+		minerBlocks = {};
+		if (data.length > 0) 
+		{
+			$.each(data, function (index, value) 
+			{
+				var createDate = convertUTCDateToLocalDate(new Date(value.created), false);
+				var effort = Math.round(value.effort * 100);
+				var effortClass = "";
+				var ServerFlag = "<img class='serverimg small-server-image' src='img/coin/" + value.source + ".png' />";
 
-          blockList += "<tr>";
-          blockList += "<td>" + createDate + "</td>";
-          blockList += "<td><a href='" + value.infoLink + "' target='_blank'>" + value.blockHeight + "</a></td>";
-          if (typeof value.effort !== "undefined") {
-            blockList += "<td class='" + effortClass + "'>" + effort + "%</td>";
-          } else {
-            blockList += "<td>n/a</td>";
-          }
-          var status = value.status;
-          blockList += "<td>" + status + "</td>";
-          blockList += "<td>" + _formatter(value.reward, 5, "") + "</td>";
-          blockList += "<td><div class='c100 small p" + Math.round(value.confirmationProgress * 100) + "'><span>" + Math.round(value.confirmationProgress * 100) + "%</span><div class='slice'><div class='bar'></div><div class='fill'></div></div></div></td>";
-          blockList += "</tr>";
-        });
-      } else {
-        blockList += '<tr><td colspan="6">No blocks found yet</td></tr>';
-      }
+				if (effort < 100) 
+				{
+					effortClass = "effort1";
+				} 
+				else if (effort < 200) 
+				{
+					effortClass = "effort2";
+				} 
+				else  
+				{
+					effortClass = "effort3";
+				} 
 
-      $("#blockList").html(blockList);
-    })
-    .fail(function() {
-      $.notify(
-        {
-          message: "Error: No response from API.<br>(loadBlocksList)"
-        },
-        {
-          type: "danger",
-          timer: 3000
-        }
-      );
-    });
+				var status = value.status;
+				var blockTable = (status === "pending" && value.confirmationProgress === 0) ? newBlockList : pendingBlockList && (status === "pending") ? pendingBlockList : blockList;
+				var timeAgo = getTimeAgo(createDate); // Calculate the time difference
+
+				blockTable += "<tr>";
+				blockTable += "<td title='" + createDate + "'>" + timeAgo + "</td>";
+				blockTable += "<td>" + value.miner.substring(0, 8) + " &hellip; " + value.miner.substring(value.miner.length - 8) + "</td>";
+				blockTable += "<td><a href='" + value.infoLink + "' target='_blank'>" + Intl.NumberFormat().format(value.blockHeight) + "</a></td>";
+	
+				blockTable += "<td>" + _formatter(value.networkDifficulty, 5, "") + "</td>";
+				if (typeof value.effort !== "undefined") 
+				{
+					blockTable += "<td class='" + effortClass + "'>" + effort + "%</td>";
+				} 
+				else 
+				{
+					blockTable += "<td>Calculating...</td>";
+				}
+				// Block object for each block
+				var block = {
+					timeAgo: timeAgo,
+					blockHeight: value.blockHeight,
+					miner: value.miner,
+					networkDifficulty: value.networkDifficulty.toFixed(8),
+					effortClass: effortClass,
+					status: value.status,
+					progressValue: progressValue,
+				};
+				if (status === "pending") 
+				{
+					if (value.confirmationProgress === 0) 
+					{
+						block.reward = "Waiting...";
+						blockTable += "<td>Waiting...</td>";
+						blockTable += "<td>New Block</td>";
+						newBlockCount++;
+					} 
+					else 
+					{
+						block.reward = "Waiting...";
+						blockTable += "<td>Waiting...</td>";
+						if (value.type =="uncle") blockTable += "<td>" + "Uncle" + "</td>";
+						else if (status === "orphaned") blockTable += "<td>" + "Orphaned" + "</td>";
+						else blockTable += "<td>" + "Pending" + "</td>";
+						pendingBlockCount++;
+					}
+				} 
+				else if (status === "confirmed") 
+				{
+					block.reward = Intl.NumberFormat('en-US', { maximumFractionDigits: 6, minimumFractionDigits: 0}).format(value.reward);
+					blockTable += "<td>" + Intl.NumberFormat('en-US', { maximumFractionDigits: 6, minimumFractionDigits: 0}).format(value.reward) + "</td>";
+					blockTable += "<td>" + "Confirmed" + "</td>";
+					confirmedBlockCount++;
+				} 
+				else if (status === "orphaned") 
+				{
+					block.reward = Intl.NumberFormat('en-US', { maximumFractionDigits: 6, minimumFractionDigits: 0}).format(value.reward);
+					blockTable += "<td>" + Intl.NumberFormat('en-US', { maximumFractionDigits: 6, minimumFractionDigits: 0}).format(value.reward) + "</td>";
+					blockTable += "<td>" + "Orphaned" + "</td>";
+				} 
+				else 
+				{
+					blockTable += status;
+				}
+				// Populate minerBlocks based on the miner value
+				if (!minerBlocks[value.miner]) 
+				{
+					minerBlocks[value.miner] = [];
+				}
+				minerBlocks[value.miner].push(block);
+				var progressValue = (currentPool.includes("woodcoin")) ? Math.min(Math.round(value.confirmationProgress * 6 * 100), 100) : Math.round(value.confirmationProgress * 100);
+				blockTable += "<td><div class='progress-bar bg-green progress-bar-striped progress-bar-animated' role='progressbar' aria-valuenow='" + progressValue + "' aria-valuemin='0' aria-valuemax='100' style='width: " + progressValue + "%'><span>" + progressValue + "% Completed</span></div></td>";
+				blockTable += "</tr>";
+
+				if (status === "pending") 
+				{
+					if (value.confirmationProgress === 0) 
+					{
+						newBlockList = blockTable;
+					}
+					else 
+					{
+						pendingBlockList = blockTable;
+					}
+				} else {
+					blockList = blockTable ;
+				}
+			});
+		} else {
+			blockList += '<tr><td colspan="8">No blocks found yet</td></tr>';
+		}
+		$("#blockList").html(blockList);
+		$("#newBlockList").html(newBlockList);
+		$("#newBlockCount").text(newBlockCount);
+		$("#pendingBlockList").html(pendingBlockList);
+		$("#pendingBlockCount").text(pendingBlockCount);
+		$("#confirmedBlockCount").text(confirmedBlockCount);
+		loadStatsData();
+	})
+	.fail(function () {
+		$.notify(
+			{
+				message: "Error: No response from API.<br>(loadBlocksList)"
+			},
+			{
+				type: "danger",
+				timer: 3000
+			}
+		);
+	});
 }
 
 // Load PAYMENTS page content
@@ -556,6 +650,31 @@ function convertUTCDateToLocalDate(date) {
     var hours = date.getUTCHours();
     newDate.setHours(hours - localOffset);
     return newDate;
+}
+
+// Function to calculate the time difference between now and a given date
+function getTimeAgo(date) {
+  var now = new Date();
+  var diff = now.getTime() - date.getTime();
+  var seconds = Math.floor(diff / 1000);
+  var minutes = Math.floor(seconds / 60);
+  var hours = Math.floor(minutes / 60);
+  var days = Math.floor(hours / 24);
+  var months = Math.floor(days / 30);
+
+  if (days >= 30) {
+    return months + " month" + (months > 1 ? "s" : "") + " ago";
+  } else if (days >= 1 && days <= 30) {
+    return days + " day" + (days > 1 ? "s" : "") + " ago";
+  } else if (hours >= 1) {
+    return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+  } else if (minutes >= 1) {
+    return minutes + " mins ago";
+  } else if (seconds >= 1 ){
+    return seconds + " secs ago";
+  } else {
+    return "Unavailable";
+  }
 }
 
 // Function to calculate the time difference between now and a given date
